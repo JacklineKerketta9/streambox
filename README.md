@@ -19,10 +19,6 @@ docker compose up --build
 
 Then open http://localhost:5173 and sign up. The first start creates the tables and seeds a demo catalog.
 
-## Deploying
-
-For a single VM production setup with Docker Compose and automatic HTTPS, see [the deployment guide](docs/DEPLOYING.md) and `docker-compose.prod.yml`.
-
 | | |
 |---|---|
 | App | http://localhost:5173 |

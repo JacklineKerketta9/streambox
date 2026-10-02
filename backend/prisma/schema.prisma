@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum Provider {
+  google
+  github
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  passwordHash  String?        // null for OAuth-only users
+  role          Role           @default(user)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  identities    AuthIdentity[]
+  refreshTokens RefreshToken[]
+  myList        MyListItem[]
+  watchHistory  WatchHistory[]
+}
+
+model AuthIdentity {
+  id             String   @id @default(uuid())
+  userId         String
+  provider       Provider
+  providerUserId String
+  emailVerified  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  familyId  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([familyId])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Genre {
+  id     Int          @id @default(autoincrement())
+  name   String       @unique
+  titles TitleGenre[]
+}
+
+model Title {
+  id           String         @id @default(uuid())
+  name         String
+  description  String         @db.Text
+  year         Int
+  durationMin  Int?
+  popularity   Int            @default(0)
+  posterUrl    String?
+  videoUrl     String?        // HLS manifest URL (will come from the transcoding pipeline later)
+  createdAt    DateTime       @default(now())
+  genres       TitleGenre[]
+  myListItems  MyListItem[]
+  watchHistory WatchHistory[]
+  assets       VideoAsset[]
+
+  @@index([popularity])
+  @@index([year])
+}
+
+model TitleGenre {
+  titleId String
+  genreId Int
+  title   Title @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([titleId, genreId])
+  @@index([genreId])
+}
+
+model MyListItem {
+  userId  String
+  titleId String
+  addedAt DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title   Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, titleId])
+  @@index([userId, addedAt])
+}
+
+model WatchHistory {
+  userId      String
+  titleId     String
+  positionSec Int
+  durationSec Int
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, titleId])
+  @@index([userId, updatedAt])
+}
+
+enum AssetStatus {
+  pending_upload
+  queued
+  processing
+  ready
+  failed
+}
+
+model VideoAsset {
+  id          String      @id @default(uuid())
+  titleId     String
+  sourceKey   String      // raw upload in object storage
+  status      AssetStatus @default(pending_upload)
+  progress    Int         @default(0)
+  attempts    Int         @default(0)
+  error       String?     @db.Text
+  manifestKey String?     // hls/<id>/master.m3u8
+  durationSec Int?
+  renditions  Json?       // e.g. ["360p","720p"]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  title       Title       @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@index([titleId])
+  @@index([status, updatedAt])
+}

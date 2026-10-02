@@ -1,0 +1,52 @@
+{
+  "name": "streambox",
+  "version": "0.1.0",
+  "description": "Backend-first Netflix-like streaming platform",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "lint": "eslint .",
+    "test": "jest --runInBand",
+    "db:push": "prisma db push",
+    "postinstall": "prisma generate",
+    "db:seed": "node prisma/seed.js",
+    "worker": "node src/worker/index.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "globalSetup": "./tests/globalSetup.js",
+    "setupFiles": [
+      "./tests/setupEnv.js"
+    ],
+    "testTimeout": 30000
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/s3-request-presigner": "^3.750.0",
+    "@prisma/client": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "bullmq": "^5.20.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "helmet": "^8.0.0",
+    "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pino": "^9.4.0",
+    "pino-http": "^10.3.0",
+    "prisma": "^6.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.10.0",
+    "eslint": "^9.10.0",
+    "globals": "^15.9.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.7",
+    "pino-pretty": "^11.2.2",
+    "supertest": "^7.0.0"
+  }
+}

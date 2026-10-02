@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from '../api.js';
 import { useAuth } from '../auth.jsx';
+import { useUpload } from '../uploadContext.jsx';
 
 // fetch() can't report upload progress, so the file goes up through XHR
 function putFile(url, file, type, onProgress) {
@@ -25,19 +26,30 @@ const STATUS_LABEL = {
 
 export default function Studio() {
   const { user } = useAuth();
+  const { uploadState, setUploadState } = useUpload();
+  const { pct, note } = uploadState;
+  const setNote = (note) => setUploadState((state) => ({ ...state, note }));
   const [titles, setTitles] = useState([]);
   const [assets, setAssets] = useState([]);
   const [titleId, setTitleId] = useState('');
   const [file, setFile] = useState(null);
-  const [pct, setPct] = useState(null);
-  const [note, setNote] = useState('');
+  const [titlesLoading, setTitlesLoading] = useState(true);
+  const [titlesError, setTitlesError] = useState('');
   const [form, setForm] = useState({ name: '', description: '', year: new Date().getFullYear(), genres: '' });
 
-  const loadTitles = () =>
-    api('/titles?limit=50').then((d) => {
+  const loadTitles = async () => {
+    setTitlesLoading(true);
+    setTitlesError('');
+    try {
+      const d = await api('/titles?limit=50');
       setTitles(d.items);
-      setTitleId((cur) => cur || (d.items[0] && d.items[0].id) || '');
-    });
+      setTitleId((cur) => d.items.some((title) => title.id === cur) ? cur : '');
+    } catch (err) {
+      setTitlesError(errorMessage(err));
+    } finally {
+      setTitlesLoading(false);
+    }
+  };
   const loadAssets = () => api('/admin/assets').then((d) => setAssets(d.assets)).catch(() => {});
 
   useEffect(() => {
@@ -72,23 +84,21 @@ export default function Studio() {
   };
 
   const upload = async () => {
-    setNote('');
-    setPct(0);
+    if (!file || !titleId) return;
+    setUploadState({ pct: 0, note: '' });
     const type = file.type || 'video/mp4';
     try {
       const { assetId, uploadUrl } = await api(`/admin/titles/${titleId}/upload`, {
         method: 'POST',
         body: { filename: file.name, contentType: type },
       });
-      await putFile(uploadUrl, file, type, setPct);
+      await putFile(uploadUrl, file, type, (progress) => setUploadState((state) => ({ ...state, pct: progress })));
       await api(`/admin/assets/${assetId}/complete`, { method: 'POST' });
       setFile(null);
-      setNote('Upload finished, transcoding has started.');
+      setUploadState({ pct: null, note: 'Upload finished, transcoding has started.' });
       loadAssets();
     } catch (err) {
-      setNote(errorMessage(err));
-    } finally {
-      setPct(null);
+      setUploadState({ pct: null, note: errorMessage(err) });
     }
   };
 
@@ -116,17 +126,21 @@ export default function Studio() {
           <h2>2. Upload a video</h2>
           <div className="stack">
             <select value={titleId} onChange={(e) => setTitleId(e.target.value)}>
+              <option value="">{titlesLoading ? 'Loading titles…' : 'Choose a title'}</option>
               {titles.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.year})</option>)}
             </select>
+            {titlesError && <p className="small error">Could not load titles: {titlesError}</p>}
+            {!titlesLoading && !titlesError && titles.length === 0 && <p className="small muted">Create a title above before uploading a video.</p>}
             <input type="file" accept="video/*" onChange={(e) => setFile(e.target.files[0] || null)} />
             {pct !== null && <div className="meter"><i style={{ width: `${pct}%` }} /></div>}
-            <button className="btn sm" disabled={!file || !titleId || pct !== null} onClick={upload}>
+            <button className="btn sm" disabled={!file || !titleId || titlesLoading || !!titlesError || pct !== null} onClick={upload}>
               {pct !== null ? `Uploading ${pct}%` : 'Upload and transcode'}
             </button>
           </div>
         </section>
       </div>
 
+      {pct !== null && <p className="note">Upload continues while you browse. Return here to see progress.</p>}
       {note && <p className="note">{note}</p>}
 
       <h2>Transcoding jobs</h2>

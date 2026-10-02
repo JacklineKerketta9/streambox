@@ -1,0 +1,18 @@
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	@api path /auth* /titles* /search* /home* /my-list* /progress* /playback* /media* /admin*
+	handle @api {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$S3_DOMAIN} {
+	reverse_proxy minio:9000
+}

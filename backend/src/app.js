@@ -16,6 +16,7 @@ const rateLimit = require('./middleware/rateLimit');
 
 function createApp() {
   const app = express();
+  app.set('trust proxy', 1); // behind Caddy: use the real client IP for rate limiting
 
   app.use(helmet());
   app.use(

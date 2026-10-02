@@ -69,11 +69,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #e5091466; border
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; margin-top: 18px; }
 .card { width: 180px; flex: none; }
 .grid .card { width: auto; }
-.poster { display: flex; align-items: flex-end; aspect-ratio: 2 / 3; border-radius: var(--radius); padding: 12px; position: relative; overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+.poster { display: flex; align-items: flex-end; aspect-ratio: 16 / 9; border-radius: var(--radius); padding: 12px; position: relative; overflow: hidden; }
 .card-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .poster.previewing .card-preview { opacity: 1; }
 .poster-name, .soon, .bar { z-index: 1; }
-.poster:hover { transform: translateY(-3px); box-shadow: 0 10px 24px #000a; }
+.poster:hover { box-shadow: 0 10px 24px #000a; }
 .poster-name { font-weight: 700; font-size: 1.05rem; line-height: 1.15; text-shadow: 0 2px 8px #000b; }
 .soon { position: absolute; top: 8px; right: 8px; background: #000a; font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; }
 .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: #ffffff33; }
@@ -82,6 +82,22 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #e5091466; border
 .icon { background: #ffffff1a; color: var(--text); border: 0; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; flex: none; }
 .icon:hover { background: #ffffff33; }
 .icon.on { background: var(--accent); }
+.hover-preview-card { position: fixed; z-index: 1000; overflow: hidden; border-radius: 7px; background: #181818; color: var(--text); box-shadow: 0 16px 42px #000c; }
+.hover-preview-art { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; }
+.hover-preview-art::after { content: ''; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, #000b); pointer-events: none; }
+.hover-preview-art video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hover-preview-name { position: absolute; z-index: 1; left: 14px; bottom: 12px; font-size: 1.15rem; font-weight: 750; text-shadow: 0 2px 8px #000; }
+.hover-preview-content { padding: 10px 14px 14px; }
+.hover-actions { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.preview-play, .preview-action { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border: 1px solid #ffffff88; border-radius: 50%; background: transparent; color: white; font: inherit; font-size: 1.2rem; cursor: pointer; }
+.preview-play { border-color: white; background: white; color: #111; font-size: 1rem; }
+.preview-action:hover { border-color: white; background: #ffffff20; }
+.preview-action.selected { border-color: var(--accent); background: var(--accent); }
+.preview-more { margin-left: auto; text-decoration: none; }
+.hover-meta { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; color: #e6e6e6; font-size: 0.86rem; }
+.quality-tag { padding: 1px 5px; border: 1px solid #999; border-radius: 3px; font-size: 0.65rem; letter-spacing: 0.04em; }
+.hover-genres { margin: 0; color: #ddd; font-size: 0.88rem; }
+.hover-description { display: -webkit-box; overflow: hidden; margin: 8px 0 0; color: #bcbcbc; font-size: 0.78rem; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .search { font-size: 1.05rem; padding: 14px; }
 
 /* watch */
@@ -131,4 +147,24 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #e5091466; border
   .player-button { width: 30px; height: 30px; }
   .volume-bar { display: none; }
   .player-time { font-size: 0.68rem; }
+  .hover-preview-card { display: none; }
 }
+
+/* ---- motion & hover polish ---- */
+.btn, .icon, .link, .nav nav a, .preview-action, .preview-play, .player-button { transition: background-color .18s ease, filter .18s ease, transform .18s ease, border-color .18s ease, color .18s ease; }
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:active:not(:disabled), .icon:active, .preview-action:active { transform: scale(.94); }
+.google-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.google-btn svg { flex: none; }
+.poster { transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; }
+.poster:hover { transform: scale(1.05); }
+.icon { transition: background-color .18s ease, transform .18s ease; }
+.icon:hover { transform: scale(1.15); }
+.card { animation: card-in .45s ease both; }
+.hero-body { animation: fade-up .6s ease both; }
+.hover-preview-card { transform-origin: center top; animation: preview-in .2s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes preview-in { from { opacity: 0; transform: scale(.88) translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes card-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.auth-card { animation: fade-up .5s ease both; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

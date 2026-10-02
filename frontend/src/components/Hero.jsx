@@ -15,7 +15,7 @@ export default function Hero({ title }) {
         <p className="hero-desc">{title.description}</p>
         <div className="hero-actions">
           <Link to={`/watch/${title.id}`} className="btn">▶ Play</Link>
-          <button className="btn ghost" onClick={() => toggle(title.id)}>
+          <button className="btn ghost" onClick={() => toggle(title.id, title).catch(() => {})}>
             {has(title.id) ? '✓ In My List' : '+ My List'}
           </button>
         </div>

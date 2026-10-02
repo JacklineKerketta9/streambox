@@ -12,16 +12,16 @@ const POSTER_INDEX = new Map([
   ['Iron Meridian', 8], ['Quiet Fields', 9], ['Pixel Pirates', 10], ['Zero Gravity Chef', 11],
 ]);
 
-export function posterStyle(title) {
+export function posterStyle(title, wide = false) {
   if (title.posterUrl) return { backgroundImage: `url("${title.posterUrl}")`, backgroundPosition: 'center', backgroundSize: 'cover' };
   const index = POSTER_INDEX.get(title.name);
   if (index === undefined) return { background: artwork(title.name) };
   const column = index % 4;
   const row = Math.floor(index / 4);
-  const yPositions = [5.56, 50, 94.44];
+  const yPositions = wide ? [13.22, 50, 86.78] : [5.56, 50, 94.44];
   return {
     backgroundImage: 'url("/images/title-poster-sprite.png")',
-    backgroundSize: '400% 400%',
+    backgroundSize: wide ? '400% 1066.67%' : '400% 400%',
     backgroundPosition: `${(column / 3) * 100}% ${yPositions[row]}%`,
   };
 }

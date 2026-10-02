@@ -1,0 +1,90 @@
+x-backend-env: &backend-env
+  NODE_ENV: production
+  DATABASE_URL: mysql://streambox:${MYSQL_PASSWORD}@mysql:3306/streambox
+  REDIS_URL: redis://redis:6379
+  S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_ENDPOINT: https://${S3_DOMAIN}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+  S3_BUCKET: streambox
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+  COOKIE_SECURE: "true"
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: streambox
+      MYSQL_USER: streambox
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes: [mysql_data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes: [redis_data:/data]
+
+  minio:
+    image: pgsty/minio:latest
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes: [minio_data:/data]
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      PORT: 3000
+      FRONTEND_URL: https://${APP_DOMAIN}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: https://${APP_DOMAIN}/auth/google/callback
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_started }
+      minio: { condition: service_started }
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: node src/worker/index.js
+    environment:
+      <<: *backend-env
+      TRANSCODE_CONCURRENCY: 1
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_started }
+      minio: { condition: service_started }
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      S3_DOMAIN: ${S3_DOMAIN}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api, minio]
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+  caddy_data:
+  caddy_config:

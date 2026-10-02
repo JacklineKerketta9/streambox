@@ -12,6 +12,11 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    strictPort: true,
+    hmr: {
+      host: 'localhost',
+      clientPort: 5173,
+    },
     proxy: Object.fromEntries(apiPaths.map((p) => [p, { target, changeOrigin: true }])),
   },
 });

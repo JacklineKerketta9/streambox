@@ -8,7 +8,14 @@ const getRedis = () => {
   return client;
 };
 
+const closeRedis = () => {
+  if (client) {
+    client.disconnect();
+    client = null;
+  }
+};
+
 // BullMQ requires maxRetriesPerRequest: null on its Redis connections.
 const createConnection = () => new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });
 
-module.exports = { createConnection, getRedis };
+module.exports = { createConnection, getRedis, closeRedis };

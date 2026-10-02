@@ -47,7 +47,7 @@ async function completeUpload(id) {
   await prisma.videoAsset.update({ where: { id }, data: { status: 'queued', progress: 0, error: null } });
   try {
     await enqueueTranscode(id);
-  } catch (err) {
+  } catch {
     // queue unavailable: go back to pending so complete can be called again
     await prisma.videoAsset.update({ where: { id }, data: { status: 'pending_upload' } });
     throw new AppError(503, 'Could not queue the transcoding job, try again');

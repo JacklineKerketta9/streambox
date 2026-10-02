@@ -32,7 +32,7 @@ function createApp() {
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
   app.use(passport.initialize());
-  app.use(rateLimit);
+  if (process.env.NODE_ENV !== 'test') app.use(rateLimit);
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
   app.get('/ready', async (_req, res) => {

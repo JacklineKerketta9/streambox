@@ -19,6 +19,9 @@
     "setupFiles": [
       "./tests/setupEnv.js"
     ],
+    "setupFilesAfterEnv": [
+      "./tests/setupAfterEnv.js"
+    ],
     "testTimeout": 30000
   },
   "dependencies": {

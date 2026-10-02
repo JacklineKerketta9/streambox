@@ -4,7 +4,7 @@ const env = require('../../config/env');
 
 function signAccessToken(user) {
   return jwt.sign({ role: user.role }, env.JWT_ACCESS_SECRET, {
-    subject: String(user._id),
+    subject: String(user.id),
     expiresIn: env.ACCESS_TOKEN_TTL,
   });
 }

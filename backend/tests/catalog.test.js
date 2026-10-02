@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../src/db/prisma');
 const { createApp } = require('../src/app');
 const { resetDb } = require('./helpers');
+const { flushProgress } = require('../src/modules/playback/progress');
 
 const app = createApp();
 const bearer = (t) => ({ Authorization: `Bearer ${t}` });
@@ -84,6 +85,7 @@ describe('viewing: my list, progress, playback, home', () => {
 
     const progress = await request(app).post('/progress').set(bearer(user)).send({ titleId: id, positionSec: 120, durationSec: 600 });
     expect(progress.status).toBe(204);
+    await flushProgress();
 
     const playback = await request(app).get(`/playback/${id}`).set(bearer(user));
     expect(playback.body).toMatchObject({ url: movie.videoUrl, positionSec: 120 });

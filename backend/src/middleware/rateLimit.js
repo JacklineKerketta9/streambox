@@ -26,7 +26,7 @@ module.exports = async function rateLimit(req, _res, next) {
       return next(new AppError(429, 'Too many requests; try again shortly'));
     }
     next();
-  } catch (err) {
+  } catch {
     // Auth fails closed if the limiter is unavailable; browsing stays available.
     if (authRoute) return next(new AppError(503, 'Authentication is temporarily unavailable'));
     next();

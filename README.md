@@ -13,7 +13,6 @@ docker-compose.yml   web, api, worker, mysql, redis, minio
 ## Run it
 
 ```bash
-cp .env.example .env     # optional
 docker compose up --build
 ```
 
@@ -33,6 +32,7 @@ The seeded titles play two public HLS test streams. To use your own video, sign 
 
 1. Sign in as the admin, open Studio, and create a title (or pick an existing one).
 2. Choose a video file and hit *Upload and transcode*. No video? `./scripts/make-sample-video.sh` makes a 20 s test clip.
+   Uploads continue while you navigate within the app; refreshing or closing the tab stops the transfer.
 3. Watch the job move through Queued → Transcoding → Ready. Once it's ready the title plays your video.
 
 What happens behind that button:
@@ -90,17 +90,20 @@ Things worth knowing about it:
 ## Development
 
 ```bash
-# backend tests need MySQL running (they use their own streambox_test database)
-docker compose up -d mysql
-cd backend && npm install && npm test
+# backend tests need MySQL and Redis; they use a separate streambox_test database
+docker compose up -d mysql redis
+cd backend && npm ci && npm run lint && npm test
 
 # run things outside docker
-cd backend && cp .env.example .env && npx prisma db push && npm run db:seed && npm run dev
+docker compose up -d mysql redis minio
+cd backend && npm ci && cp .env.example .env && npx prisma db push && npm run db:seed && npm run dev
 cd backend && npm run worker          # needs ffmpeg installed, plus redis and minio running
-cd frontend && npm install && npm run dev
+cd frontend && npm ci && npm run dev
 ```
 
 Useful: `docker compose logs -f worker`, `docker compose exec api npm run db:seed`, `docker compose down -v` (wipes all data).
+
+GitHub Actions runs backend lint and tests, builds the frontend, and builds both Docker images on pushes to `main` and pull requests.
 
 ## Notes and decisions
 
